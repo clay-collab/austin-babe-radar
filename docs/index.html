@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Austin Babe Radar</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f0f13;
+    color: #e8e8f0;
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ff6ec4, #7873f5, #4adede);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+  .header .subtitle {
+    color: #888;
+    margin-top: 6px;
+    font-size: 0.9rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .card {
+    display: block;
+    background: #1a1a24;
+    border: 1px solid #2a2a38;
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: #7873f5;
+    box-shadow: 0 8px 32px rgba(120,115,245,0.15);
+  }
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 99px;
+  }
+  .date {
+    font-size: 0.8rem;
+    color: #888;
+  }
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    color: #f0f0ff;
+  }
+  .card-location {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-bottom: 8px;
+  }
+  .card-desc {
+    font-size: 0.82rem;
+    color: #888;
+    line-height: 1.5;
+  }
+  .empty {
+    text-align: center;
+    color: #666;
+    padding: 60px 20px;
+    grid-column: 1 / -1;
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+  .manual {
+    max-width: 1100px;
+    margin: 48px auto 0;
+    background: #1a1a24;
+    border: 1px solid #2a2a38;
+    border-radius: 14px;
+    padding: 24px 28px;
+  }
+  .manual h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 14px;
+  }
+  .manual ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .manual a {
+    color: #7873f5;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .manual a:hover { text-decoration: underline; }
+  .manual strong { color: #e8e8f0; }
+  .count {
+    text-align: center;
+    color: #666;
+    font-size: 0.82rem;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Austin Babe Radar</h1>
+  <div class="subtitle">Early-signal women's events in ATX &nbsp;·&nbsp; March 07, 2026  04:17 PM</div>
+</div>
+<div class="count">20 events found</div>
+<div class="grid">
+
+        <a class="card" href="https://www.meetup.com/the-dallas-holistic-chamber-of-commerce/events/313416573/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-24</span>
+            </div>
+            <div class="card-title">The Power To Withstand: Mindset, Faith, & Wellness in the Face of Life's Storms</div>
+            <div class="card-location">📍 The Dallas Holistic Chamber of Commerce</div>
+            <div class='card-desc'>**📢** Join us for our Lunch & Learn at Blue Mesa Grill in Addison. Come hungry and ready to connect!
+
+**Our Speaker:**
+**Tanishia Richmond (Coach Sunflower)** is a certified nutritionist, holistic lif…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/meetup-group-rmvqtkdc/events/313568021/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-20</span>
+            </div>
+            <div class="card-title">Women's Bible Study: Through the Bible in One Year</div>
+            <div class="card-location">📍 Divine Women of God Sister Circle</div>
+            <div class='card-desc'>Join the Divine Women of God Sister Circle for an evening of deepening our faith and supporting each other on our spiritual journeys. This Bible study and support group is a safe space for women to co…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/the-feminine-collective/events/311599237/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-19</span>
+            </div>
+            <div class="card-title">🧖‍♀️Midweek MindSpa✨</div>
+            <div class="card-location">📍 The Feminine Collective</div>
+            <div class='card-desc'>💃🏾The Feminine Collective✨ presents
+🧖‍♀️Midweek MindSpa✨
+
+✨A Monthly Gathering for Women Placing Their Wellbeing First ✨
+
+🧖‍♀️Midweek MindSpa✨
+Melt into your midweek sanctuary for a gentle pause desig…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/the-feminine-collective/events/313284926/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-15</span>
+            </div>
+            <div class="card-title">✨🎉 🥂The Feminine Collective Anniversary Day Party🥂 🎉✨ </div>
+            <div class="card-location">📍 The Feminine Collective</div>
+            <div class='card-desc'>🌤️Helloooo, Ladies!!!💃🏾
+
+Hope you all had a lovely weekend🤗.
+
+No matter what stage or season you are in your life - take a deep breath 💨 giving gratitude to where you are and how far you have come…👏🏾👏…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/dfwyoungsocial/events/313491860/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-15</span>
+            </div>
+            <div class="card-title">DFWYAS Social Run Club</div>
+            <div class="card-location">📍 DFW Young and Social Club (21-40)</div>
+            <div class='card-desc'>Looking for a great way to start your Sunday? Member Rushil is hosting a weekly Run Club for the club, and you’re invited! Whether you're a runner, a jogger, or just looking for a casual morning walk,…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/dallas-girlies/events/313385509/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-14</span>
+            </div>
+            <div class="card-title">Nervous System Reset: Sound Healing, Movement, Intention Setting</div>
+            <div class="card-location">📍 Dallas Girlies</div>
+            <div class='card-desc'>We live in a world that never stops. This is a two-hour invitation to pause, recalibrate your nervous system, and walk away with a concrete plan to live more aligned with what actually matters to you.…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/naked-yoga-ish-dallas/events/313478077/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-14</span>
+            </div>
+            <div class="card-title">Naked Yoga: Kemetic Yoga with Jalenzski!</div>
+            <div class="card-location">📍 Naked Yoga Dallas</div>
+            
+        </a>
+        <a class="card" href="https://www.meetup.com/isha-yoga-dallas-free-meditation-classes/events/313363954/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-14</span>
+            </div>
+            <div class="card-title">Yoga for Beginners / Upa Yoga (Free In-Person)</div>
+            <div class="card-location">📍 Inner Engineering Dallas (Isha Yoga & Meditation Classes)</div>
+            <div class='card-desc'>To RSVP, please [click here](https://innerengineering.sadhguru.org/dallas).\*\*
+Once you click on this link, please provide your email address to receive an email with details.
+
+**Yoga for Beginners (…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/isha-yoga-dallas-free-meditation-classes/events/313561176/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-14</span>
+            </div>
+            <div class="card-title">Introduction to Isha Hatha Yoga (Free Online Webinar open to All)</div>
+            <div class="card-location">📍 Inner Engineering Dallas (Isha Yoga & Meditation Classes)</div>
+            <div class='card-desc'>To RSVP, please **[Click Here](https://innerengineering.sadhguru.org/free-yoga?)**
+Once you click on this link, please provide your email address and you will receive an email with details on how you …</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/meetup-group-cxrqfaxo/events/313501765/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-14</span>
+            </div>
+            <div class="card-title">3 Mile Walk at White Rock Lake!</div>
+            <div class="card-location">📍 Melanin Movement</div>
+            <div class='card-desc'>LADIES! Let's get stepping!
+
+It's time to lace up those sneakers and hit the pavement for a 3 mile WALK at White Rock Lake!
+
+WHERE WE MEET: We start walking promptly at the indicated meetup time. Park…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/sacred-gatherins-at-aho-healing-arts/events/311790878/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-13</span>
+            </div>
+            <div class="card-title">Sacred Sisterhood Woman’s Circle </div>
+            <div class="card-location">📍 Sacred Gatherings at Ahó Healing Arts</div>
+            <div class='card-desc'>✨ Sacred Sisterhood Women’s Circle ✨
+Thursday, September 9th · 7:00 PM
+Aho Healing Arts – Plano, TX
+
+Join us for a heart-opening evening of connection, reflection, and divine feminine embodiment. This…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/dallas-girlies/events/313389756/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-13</span>
+            </div>
+            <div class="card-title">Yogi Sesh + Sound Healing</div>
+            <div class="card-location">📍 Dallas Girlies</div>
+            <div class='card-desc'>Experience a morning designed to recalibrate your system and ground your energy before the world wakes up. This is a spin on traditional yoga -- a curated movement experience focused on awakening the …</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/isha-yoga-dallas-free-meditation-classes/events/313363991/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-13</span>
+            </div>
+            <div class="card-title">Surya Kriya (Paid In-Person)</div>
+            <div class="card-location">📍 Inner Engineering Dallas (Isha Yoga & Meditation Classes)</div>
+            <div class='card-desc'>To Register Visit : [https://www.innerengineering.com/Dallas](https://www.innerengineering.com/Dallas) or register [here](https://online.innerengineering.com/en/program-registration/9259).
+
+**For thos…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/dfwyoungsocial/events/313439833/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-12</span>
+            </div>
+            <div class="card-title">Wednesday Wind-Down Flow Yoga Class | Free / Pay What You Can</div>
+            <div class="card-location">📍 DFW Young and Social Club (21-40)</div>
+            <div class='card-desc'>Looking for a yoga class that blends calm, connection, and just the right amount of challenge? Our Wind-Down Flow Yoga is open to all levels and designed to help you move, breathe, and reset. Led by C…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/isha-yoga-dallas-free-meditation-classes/events/313561067/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-12</span>
+            </div>
+            <div class="card-title">Meditation for Beginners - Isha Kriya (Free Online Webinar)</div>
+            <div class="card-location">📍 Inner Engineering Dallas (Isha Yoga & Meditation Classes)</div>
+            <div class='card-desc'>**To RSVP, please [click here](https://www.innerengineering.com/webinar/meditation-for-beginners).**
+Once you click on this link, please provide your email address, and you will receive an email with …</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/naked-yoga-ish-dallas/events/313424788/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-11</span>
+            </div>
+            <div class="card-title">Naked Yoga: Electric Slow Flow w/ Gabriel!</div>
+            <div class="card-location">📍 Naked Yoga Dallas</div>
+            
+        </a>
+        <a class="card" href="https://www.meetup.com/frisco-social-run-club/events/313423359/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-11</span>
+            </div>
+            <div class="card-title">Frisco Social Run Club - Free 5K</div>
+            <div class="card-location">📍 Frisco Social Run Club - Free 5k</div>
+            <div class='card-desc'>We made it to spring!! No need for headlamps anymore! Please note that we are changing the starting time to 7:00pm every Tuesday evening. Lace up your running shoes and join us for another exhilaratin…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/dfw-non-sexual-cuddle-club/events/313559480/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-08</span>
+            </div>
+            <div class="card-title">March Celebratory Cuddles 🥰</div>
+            <div class="card-location">📍 DFW Non-sexual Cuddle Club</div>
+            <div class='card-desc'>What is a Cuddle Party?
+
+Bring a higher degree of consciousness to your communication and contact. Cuddle party features a safe, supportive space to explore a wide range of nurturing touch and connect…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/theadventureladies/events/313285156/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-08</span>
+            </div>
+            <div class="card-title">Easy Nature Walk – Wilson Creek Trail Connector</div>
+            <div class="card-location">📍 Adventure Ladies</div>
+            <div class='card-desc'>### **Easy Nature Walk – Wilson Creek Trail Connector**
+
+Please be sure to sign up from the link below- RSVP on Meetup doesn't secure your spot. Thanks!
+
+**Relaxed • paved path • no pressure**
+
+Join u…</div>
+        </a>
+        <a class="card" href="https://www.meetup.com/theadventureladies/events/313284951/" target="_blank" rel="noopener">
+            <div class="card-top">
+                <span class="badge" style="background:#f65858;color:white">Meetup</span>
+                <span class="date">2026-03-08</span>
+            </div>
+            <div class="card-title">Sold Out- Pour Painting Workshop</div>
+            <div class="card-location">📍 Adventure Ladies</div>
+            <div class='card-desc'>### **Outdoor Pour Painting Workshop**
+
+Please note: this event is sold out- please only come if you have a paid ticket to the event, not an RSVP on Meetup.
+Thank you!!!
+
+**Beginner friendly • playful…</div>
+        </a>
+</div>
+
+        <div class="manual">
+            <h3>Always worth a manual check</h3>
+            <ul>
+                <li><a href="https://www.eventbrite.com/d/tx--austin/wellness/?sort=date" target="_blank">Eventbrite → Austin Wellness (sort: Date)</a></li>
+                <li><a href="https://www.meetup.com/find/events/?allMeetups=false&keywords=women+wellness&location=Austin+TX&radius=25" target="_blank">Meetup → Women + Wellness near Austin</a></li>
+                <li><a href="https://sweatpals.com" target="_blank">Sweatpals.com — ladies-only ATX fitness</a></li>
+                <li>Instagram: <strong>#ATXRunClub  #AustinWellness  #GirlsWhoRunATX</strong></li>
+            </ul>
+        </div>
+</body>
+</html>

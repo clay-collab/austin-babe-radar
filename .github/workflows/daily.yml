@@ -1,0 +1,36 @@
+name: Daily Radar
+
+on:
+  schedule:
+    - cron: "0 14 * * *"   # 9am CDT (UTC-5) every day
+  workflow_dispatch:         # also allows manual trigger from GitHub UI
+
+permissions:
+  contents: write            # needed to commit docs/index.html back
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run radar
+        run: python3 babe_radar.py --output docs/index.html --no-browser
+
+      - name: Commit updated results
+        run: |
+          git config user.name  "Radar Bot"
+          git config user.email "actions@github.com"
+          git add docs/index.html
+          git diff --staged --quiet || git commit -m "Daily update: $(date +'%Y-%m-%d')"
+          git push

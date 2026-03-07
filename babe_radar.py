@@ -577,6 +577,7 @@ def main() -> None:
     parser.add_argument("--save",       action="store_true", help="Save results to CSV")
     parser.add_argument("--email",      action="store_true", help="Email HTML results")
     parser.add_argument("--no-browser", action="store_true", help="Skip opening browser")
+    parser.add_argument("--output",     metavar="FILE",      help="Write HTML to this file instead of a temp file")
     args = parser.parse_args()
 
     print("Austin Babe Radar — scraping live sources...\n")
@@ -591,7 +592,14 @@ def main() -> None:
 
     print(f"\nTotal: {len(all_events)} events aggregated\n")
 
-    if not args.no_browser:
+    if args.output:
+        # Write HTML to a specific file (used by GitHub Actions)
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        html = build_html(all_events)
+        with open(args.output, "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"[OUTPUT]  {args.output}")
+    elif not args.no_browser:
         open_in_browser(all_events)
 
     if args.save:

@@ -1,95 +1,86 @@
 # Austin Babe Radar
 
-Scans X (Twitter) for **early-signal posts** about trendy Austin events that attract
+Scrapes Eventbrite and Meetup daily for early-signal trendy Austin events that attract
 hot single women — wellness pop-ups, run clubs, yoga, sound baths, brunches, singles
 mixers — *before* they get overrun.
 
-The trick: filter for **low-engagement posts** (< 100 likes). If a fitness studio just
-announced a Saturday pop-up and it has 3 likes, you found it first.
+**Live site:** `https://YOUR_USERNAME.github.io/austin-babe-radar`
+(replace YOUR_USERNAME after you push to GitHub)
 
 ---
 
-## Quickstart
+## Deploy to the internet (GitHub Actions + Pages)
 
-### 1. Get a Bearer Token
+### 1. Create a GitHub repo
 
-1. Go to [developer.twitter.com](https://developer.twitter.com)
-2. Create a project + app (Free tier is enough for recent search)
-3. Copy the **Bearer Token** from your app's *Keys & Tokens* tab
+Go to [github.com/new](https://github.com/new), create a repo called `austin-babe-radar`, leave it public.
 
-### 2. Install dependency
+### 2. Push this code
 
 ```bash
-pip install requests
+cd ~/Desktop/austin-babe-radar
+git remote add origin https://github.com/YOUR_USERNAME/austin-babe-radar.git
+git push -u origin main
 ```
 
-### 3. Set your token
+### 3. Enable GitHub Pages
 
-Option A — environment variable (recommended):
+1. Go to your repo on GitHub → **Settings** → **Pages**
+2. Under **Source**, select **Deploy from a branch**
+3. Branch: `main` / Folder: `/docs`
+4. Click **Save**
+
+Your site will be live at `https://YOUR_USERNAME.github.io/austin-babe-radar` within ~1 minute.
+
+### 4. That's it
+
+The workflow in `.github/workflows/daily.yml` runs every day at 9am CDT.
+It scrapes Eventbrite + Meetup, writes a fresh `docs/index.html`, and pushes it.
+Your site auto-updates daily with no action needed.
+
+To trigger a manual refresh anytime: GitHub → **Actions** → **Daily Radar** → **Run workflow**.
+
+---
+
+## Run locally
+
 ```bash
-export X_BEARER_TOKEN="AAAAAAAAAAAAAAAAAAAAAYour..."
-```
+pip3 install -r requirements.txt
 
-Option B — edit `babe_radar.py` directly:
-```python
-BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAYour..."
-```
-
-### 4. Run it
-
-```bash
-# Print results to terminal
-python babe_radar.py
-
-# Save top 10 to CSV
-python babe_radar.py --save
-
-# Email results
-python babe_radar.py --email
-
-# Both
-python babe_radar.py --save --email
+python3 babe_radar.py              # scrape + open results in browser
+python3 babe_radar.py --save       # also export CSV
+python3 babe_radar.py --email      # also email to recipients
+python3 babe_radar.py --no-browser # headless / no browser popup
 ```
 
 ---
 
-## Email Setup (optional)
-
-Edit the SMTP block at the top of `babe_radar.py`, or set env vars:
+## Email setup (optional)
 
 ```bash
 export SMTP_USER="you@gmail.com"
-export SMTP_PASSWORD="your_gmail_app_password"   # App Password, not your real password
+export SMTP_PASSWORD="your_gmail_app_password"   # myaccount.google.com/apppasswords
 export EMAIL_TO="you@gmail.com"
+export EMAIL_TO_FRIEND="friend@gmail.com"
 ```
 
-For Gmail App Passwords: [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+Then run:
+```bash
+python3 babe_radar.py --email
+```
 
 ---
 
-## Tuning the Radar
+## Tuning
 
 | Setting | Default | What it does |
 |---|---|---|
-| `MAX_LIKES_THRESHOLD` | `100` | Posts with fewer likes than this are "early signal" |
-| `MAX_RESULTS` | `25` | How many X posts to fetch per run |
-| `TOP_N` | `10` | How many results to show / export |
-| `SINCE_DATE` | `2026-03-01` | Only posts after this date |
-| `QUERY` | (see script) | Add / remove keywords to tune signal |
+| `TOP_N` | `20` | Max events to display |
+| `SIGNAL_KEYWORDS` | (see script) | Add/remove keywords that flag relevant events |
 
 ---
 
-## Future Sources (TODOs in code)
+## Sources
 
-- `scrape_sweatpals()` — scrape Sweatpals.com for Austin women's fitness events
-- `scrape_eventbrite()` — scrape Eventbrite newly-listed Austin wellness events
-- Both are stubbed with BeautifulSoup instructions — uncomment when ready
-
----
-
-## Manual Leads (printed every run)
-
-- **Sweatpals.com** — Ladies-Only Austin Events
-- **Eventbrite** — Search "Austin wellness", sort by Newly Listed
-- **Instagram** — `#ATXRunClub` `#AustinWellness` `#GirlsWhoRunATX`
-- **Meetup.com** — Fitness & Health, Austin, Women's groups
+- **Eventbrite** — `/d/tx--austin/wellness/`, `/fitness/`, `/yoga/` sorted by date
+- **Meetup** — women + wellness / yoga / run club searches near Austin, TX
