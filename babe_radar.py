@@ -110,6 +110,11 @@ EXCLUDE_KEYWORDS = [
     # Age-restricted groups (not our demo)
     "50s", "over 50", "50+", "55+", "60+", "senior", "retiree",
     "40s and 50s", "50 and over", "fit 50",
+    # Too young
+    "teen ", "teens", "teenager", "teenagers", "youth", "ages 13", "ages 14",
+    "ages 15", "ages 16", "13-18", "high school", "middle school",
+    # Age-targeted singles (e.g. "born 1965-1985")
+    "born 196", "born 197", "born 198",
     # LGBTQ / Queer-focused
     "queer", "lgbtq", "lgbt", "pride", "drag", "drag brunch",
     "drag queen", "drag show", "nonbinary", "non-binary", "trans ",
@@ -123,6 +128,28 @@ EXCLUDE_KEYWORDS = [
     "bipoc only", "poc only", "safe space",
     "social justice", "allyship", "intersectional",
     "privilege", "patriarchy", "dismantle",
+    "join our directory", "be a resource",
+    "equity", "inclusion workshop", "diversity workshop", "dei ",
+    "anti-oppression", "liberation", "healing justice",
+    # Racial / ethnic identity-focused (not general audience)
+    "black wellness", "for black", "melanin", "afro ", "african american wellness",
+    "asian wellness", "for asian", "asian american", "aapi ",
+    "hispanic wellness", "for hispanic", "for latino", "for latina", "latinx",
+    "indigenous wellness", "for indigenous", "native american wellness",
+    "jewish wellness", "for jewish",
+    "middle eastern", "arab american",
+    "people of color", "communities of color", "minority community",
+    # Professional / work-related (not fun)
+    "advertising mastery", "social media advertising", "digital marketing",
+    "job fair", "career fair", "resume", "linkedin",
+    "entrepreneurship", "business workshop", "sales training",
+    "b2b", "lead generation", "networking for business",
+    "professional development", "career development", "career coaching",
+    "startup", "pitch competition", "venture", "investor",
+    "certification", "masterclass", "bootcamp for",
+    "how to grow", "grow your business", "scale your", "monetize",
+    "real estate investing", "passive income", "side hustle",
+    "workshop for entrepreneurs", "for founders", "for executives",
 ]
 
 # ---------------------------------------------------------------------------
