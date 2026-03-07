@@ -97,12 +97,45 @@ SIGNAL_KEYWORDS = [
 
 # Events with these phrases are likely women-only — skip them (we want coed)
 EXCLUDE_KEYWORDS = [
+    # Women-only
     "girls night", "girls only", "ladies night", "ladies only",
     "women only", "women's circle", "womens circle", "woman's circle",
     "sisterhood", "sister circle", "feminine collective",
     "moms only", "mothers only", "bridal", "bachelorette",
     "women who", "for women", "for ladies", "girls who",
     "femme only", "female only",
+    # LGBTQ / Queer-focused
+    "queer", "lgbtq", "lgbt", "pride", "drag", "drag brunch",
+    "drag queen", "drag show", "nonbinary", "non-binary", "trans ",
+    "two-spirit", "sapphic", "leather", "kink",
+    # Woke / activist
+    "decolonize", "decolonizing", "anti-racist", "antiracist",
+    "abolition", "mutual aid", "reparations",
+    "bipoc only", "poc only", "safe space",
+    "social justice", "allyship", "intersectional",
+    "privilege", "patriarchy", "dismantle",
+]
+
+# ---------------------------------------------------------------------------
+# Category classification: workout vs social
+# ---------------------------------------------------------------------------
+WORKOUT_KEYWORDS = [
+    "run club", "running club", "hot pilates", "pilates", "hot yoga",
+    "yoga", "barre", "reformer", "spin", "cycle", "hiit", "sculpt",
+    "crossfit", "bootcamp", "boot camp", "strength", "cardio",
+    "paddleboard", "kayak", "hike", "hiking", "bike ride", "social ride",
+    "cold plunge", "ice bath", "sauna", "fitness",
+]
+
+SOCIAL_KEYWORDS = [
+    "brunch", "matcha", "sip and paint", "sip & paint",
+    "wine tasting", "coffee crawl", "paint night", "pottery",
+    "ceramics", "flower arrangement", "gallery", "art walk",
+    "art market", "mixer", "social", "singles", "speed dating",
+    "young professionals", "rooftop", "outdoor cinema", "picnic",
+    "farmers market", "food pop up", "pop up", "pop-up",
+    "sunset", "sound bath", "sound healing", "breathwork",
+    "meditation", "wellness",
 ]
 
 
@@ -131,6 +164,20 @@ def _is_relevant(text: str) -> bool:
     return any(kw in lower for kw in SIGNAL_KEYWORDS)
 
 
+def _classify_category(text: str) -> str:
+    """Classify event as 'Workout', 'Social', or 'Social' (default)."""
+    lower = text.lower()
+    is_workout = any(kw in lower for kw in WORKOUT_KEYWORDS)
+    is_social  = any(kw in lower for kw in SOCIAL_KEYWORDS)
+    if is_workout and not is_social:
+        return "Workout"
+    if is_social and not is_workout:
+        return "Social"
+    if is_workout and is_social:
+        return "Workout"  # if it matches both, lean workout
+    return "Social"
+
+
 def _add_computed_fields(event: dict) -> dict:
     """Add distance_miles and day_of_week to an event dict."""
     # Distance
@@ -156,6 +203,11 @@ def _add_computed_fields(event: dict) -> dict:
             event["day_of_week"] = ""
     else:
         event["day_of_week"] = ""
+
+    # Category
+    event["category"] = _classify_category(
+        (event.get("name") or "") + " " + (event.get("text") or "")
+    )
 
     return event
 
@@ -609,10 +661,15 @@ def build_html(events: list[dict]) -> str:
             desc = text if text.lower().strip() != name.lower().strip() else ""
             desc = html_escape(desc[:180]) + ("..." if len(desc) > 180 else "") if desc else ""
 
+            # Category tag
+            cat = e.get("category", "Social")
+            cat_bg = "#22c55e" if cat == "Workout" else "#a78bfa"
+
             cards_html += f"""
         <a class="card" href="{url}" target="_blank" rel="noopener">
             <div class="card-top">
                 <span class="badge" style="background:{bg};color:{fg}">{source}</span>
+                <span class="badge" style="background:{cat_bg};color:white">{cat}</span>
                 <span class="date">{date_display}</span>
             </div>
             <div class="card-title">{name}</div>
@@ -747,7 +804,7 @@ def open_in_browser(events: list[dict]) -> str:
 def save_to_csv(events: list[dict]) -> str:
     filename   = f"austin_radar_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     fieldnames = [
-        "source", "date", "day_of_week", "time", "name", "venue_name",
+        "source", "category", "date", "day_of_week", "time", "name", "venue_name",
         "address", "distance_miles", "price_low", "price_high", "is_free",
         "rsvp_count", "interested_count", "text", "url",
     ]
