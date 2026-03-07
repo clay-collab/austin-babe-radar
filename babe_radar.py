@@ -28,7 +28,7 @@ import argparse
 import tempfile
 import webbrowser
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from html import escape as html_escape
 from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
@@ -115,6 +115,8 @@ EXCLUDE_KEYWORDS = [
     "drag queen", "drag show", "nonbinary", "non-binary", "trans ",
     "two-spirit", "sapphic", "leather", "kink",
     "lesbian", "lesbians", "gay ",
+    # Religious
+    "bible study", "bible", "church", "worship service", "prayer group",
     # Woke / activist
     "decolonize", "decolonizing", "anti-racist", "antiracist",
     "abolition", "mutual aid", "reparations",
@@ -208,16 +210,33 @@ def _add_computed_fields(event: dict) -> dict:
     else:
         event["distance_miles"] = None
 
-    # Day of week
+    # Friendly date + time: "Tuesday 7pm"
     date_str = event.get("date") or ""
+    time_str = event.get("time") or ""
     if len(date_str) >= 10:
         try:
             dt = datetime.strptime(date_str[:10], "%Y-%m-%d")
-            event["day_of_week"] = dt.strftime("%a")
+            if dt.date() == datetime.now().date():
+                event["day_of_week"] = "Today"
+            else:
+                event["day_of_week"] = dt.strftime("%A")
         except ValueError:
             event["day_of_week"] = ""
     else:
         event["day_of_week"] = ""
+
+    # Convert 24h time like "19:00" to "7pm"
+    if time_str and ":" in time_str:
+        try:
+            t = datetime.strptime(time_str.strip()[:5], "%H:%M")
+            if t.minute == 0:
+                event["friendly_time"] = t.strftime("%-I%p").lower()
+            else:
+                event["friendly_time"] = t.strftime("%-I:%M%p").lower()
+        except ValueError:
+            event["friendly_time"] = time_str
+    else:
+        event["friendly_time"] = ""
 
     # Category
     event["category"] = _classify_category(
@@ -656,12 +675,22 @@ def aggregate(sources: list[list[dict]]) -> list[dict]:
             item = _add_computed_fields(item)
             combined.append(item)
 
-    # Drop Eventbrite events that are too far from downtown (has coords)
-    # Keep Meetup events with no coords (URL already constrains to Austin)
+    today = datetime.now().strftime("%Y-%m-%d")
+    cutoff = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
+
     filtered = []
     for e in combined:
+        # Distance filter
         dist = e.get("distance_miles")
         if dist is not None and dist > MAX_DISTANCE_MILES:
+            continue
+        # Only next 7 days
+        d = e.get("date") or ""
+        if d and (d < today or d > cutoff):
+            continue
+        # Min 10 going (keep if unknown)
+        rsvp = e.get("rsvp_count")
+        if rsvp is not None and rsvp < 10:
             continue
         filtered.append(e)
 
@@ -675,55 +704,49 @@ def aggregate(sources: list[list[dict]]) -> list[dict]:
 # ===========================================================================
 
 def build_html(events: list[dict]) -> str:
-    now_str = datetime.now().strftime("%B %d, %Y  %I:%M %p")
+    now_str = datetime.now().strftime("%B %d, %Y  %-I:%M %p")
 
+    # Muted source badge colors
     source_badge = {
-        "Eventbrite": ("#f05537", "white"),
-        "Meetup":     ("#ed1c40", "white"),
+        "Eventbrite": ("#3a2a28", "#c08070"),
+        "Meetup":     ("#2a2832", "#9088b0"),
     }
 
     # Group events by category
-    sections = [
-        ("Workout",   "#22c55e", [e for e in events if e.get("category") == "Workout"]),
-        ("Spiritual", "#c084fc", [e for e in events if e.get("category") == "Spiritual"]),
-        ("Social",    "#38bdf8", [e for e in events if e.get("category") == "Social"]),
+    tabs = [
+        ("Workout",   "#22c55e", "0f130f", [e for e in events if e.get("category") == "Workout"]),
+        ("Spiritual", "#c084fc", "110f15", [e for e in events if e.get("category") == "Spiritual"]),
+        ("Social",    "#38bdf8", "0f1115", [e for e in events if e.get("category") == "Social"]),
     ]
 
-    sections_html = ""
-    if not events:
-        sections_html = """
-        <div class="empty">
-            No coed events matched your filters right now.<br>
-            Try the manual links below or widen MAX_DISTANCE_MILES.
-        </div>"""
-    else:
-        for section_name, section_color, section_events in sections:
-            if not section_events:
-                continue
-            sections_html += f"""
-        <div class="section">
-            <h2 class="section-title" style="border-color:{section_color}">
-                <span class="section-dot" style="background:{section_color}"></span>
-                {section_name} <span class="section-count">({len(section_events)})</span>
-            </h2>
-            <div class="grid">"""
+    # Build cards HTML for each tab
+    tab_buttons = ""
+    tab_panels = ""
+    for i, (tab_name, tab_color, tab_bg, tab_events) in enumerate(tabs):
+        active = " active" if i == 0 else ""
+        count = len(tab_events)
+        tab_buttons += f'<button class="tab{active}" data-tab="{tab_name.lower()}" data-bg="#{tab_bg}" style="--tab-color:{tab_color}">{tab_name} <span class="tab-count">{count}</span></button>\n'
 
-            for e in section_events:
+        display = "grid" if i == 0 else "none"
+        cards = ""
+        if not tab_events:
+            cards = f'<div class="empty">No {tab_name.lower()} events this week.</div>'
+        else:
+            for e in tab_events:
                 name   = html_escape(e.get("name") or "")
                 source = e.get("source", "")
                 url    = e.get("url") or "#"
-                bg, fg = source_badge.get(source, ("#888", "white"))
+                bg, fg = source_badge.get(source, ("#333", "#888"))
 
                 dow  = e.get("day_of_week", "")
-                date = e.get("date") or "date TBD"
-                t    = e.get("time") or ""
-                date_display = f"{dow}, {date}" if dow else date
-                if t:
-                    date_display += f" at {t}"
+                ft   = e.get("friendly_time", "")
+                date_display = dow
+                if ft:
+                    date_display += f" {ft}" if dow else ft
 
                 venue = html_escape(e.get("venue_name") or e.get("address") or "Austin, TX")
                 dist  = e.get("distance_miles")
-                dist_str = f" — {dist} mi from downtown" if dist is not None else ""
+                dist_str = f" — {dist} mi" if dist is not None else ""
 
                 price_str = _format_price(e)
                 price_class = "free" if (e.get("is_free") or price_str == "FREE") else ""
@@ -733,7 +756,7 @@ def build_html(events: list[dict]) -> str:
                 desc = text if text.lower().strip() != name.lower().strip() else ""
                 desc = html_escape(desc[:180]) + ("..." if len(desc) > 180 else "") if desc else ""
 
-                sections_html += f"""
+                cards += f"""
                 <a class="card" href="{url}" target="_blank" rel="noopener">
                     <div class="card-top">
                         <span class="badge" style="background:{bg};color:{fg}">{source}</span>
@@ -746,21 +769,9 @@ def build_html(events: list[dict]) -> str:
                     {"<div class='card-desc'>" + desc + "</div>" if desc else ""}
                 </a>"""
 
-            sections_html += """
-            </div>
-        </div>"""
+        tab_panels += f'<div class="tab-panel" id="panel-{tab_name.lower()}" style="display:{display}">\n<div class="grid">{cards}\n</div>\n</div>\n'
 
-    manual = """
-        <div class="manual">
-            <h3>Always worth a manual check</h3>
-            <ul>
-                <li><a href="https://www.eventbrite.com/d/tx--austin/wellness/?sort=date" target="_blank">Eventbrite — Austin Wellness (sort: Date)</a></li>
-                <li><a href="https://www.meetup.com/find/?keywords=social&location=us--tx--Austin&source=EVENTS&eventType=inPerson" target="_blank">Meetup — Austin Social (in-person)</a></li>
-                <li><a href="https://sweatpals.com" target="_blank">Sweatpals — ATX fitness</a></li>
-                <li>Instagram: <strong>#ATXRunClub  #AustinWellness  #ATXYoga  #AustinBrunch</strong></li>
-                <li>TikTok: <strong>#AustinThingsToDo  #ATXEvents  #AustinFitness</strong></li>
-            </ul>
-        </div>"""
+    manual = ""
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -772,12 +783,13 @@ def build_html(events: list[dict]) -> str:
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #0f0f13;
+    background: #0f130f;
     color: #e8e8f0;
     min-height: 100vh;
     padding: 32px 16px 64px;
+    transition: background 0.4s ease;
   }}
-  .header {{ text-align: center; margin-bottom: 40px; }}
+  .header {{ text-align: center; margin-bottom: 24px; }}
   .header h1 {{
     font-size: 2.4rem; font-weight: 800;
     background: linear-gradient(135deg, #ff6ec4, #7873f5, #4adede);
@@ -785,13 +797,31 @@ def build_html(events: list[dict]) -> str:
     background-clip: text; letter-spacing: -0.5px;
   }}
   .header .subtitle {{ color: #888; margin-top: 6px; font-size: 0.9rem; }}
+  .tabs {{
+    display: flex; justify-content: center; gap: 8px;
+    max-width: 500px; margin: 0 auto 28px;
+  }}
+  .tab {{
+    flex: 1; padding: 10px 16px; border: 1px solid #2a2a38;
+    border-radius: 10px; background: #1a1a24; color: #888;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s ease;
+  }}
+  .tab:hover {{ border-color: #444; color: #ccc; }}
+  .tab.active {{
+    background: var(--tab-color); color: #fff;
+    border-color: var(--tab-color);
+  }}
+  .tab-count {{
+    font-weight: 400; font-size: 0.8rem; opacity: 0.7;
+  }}
   .grid {{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px; max-width: 1100px; margin: 0 auto;
   }}
   .card {{
-    display: block; background: #1a1a24; border: 1px solid #2a2a38;
+    display: block; background: rgba(26,26,36,0.85); border: 1px solid #2a2a38;
     border-radius: 14px; padding: 18px 20px;
     text-decoration: none; color: inherit;
     transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
@@ -802,10 +832,11 @@ def build_html(events: list[dict]) -> str:
   }}
   .card-top {{ display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }}
   .badge {{
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
-    text-transform: uppercase; padding: 3px 8px; border-radius: 99px;
+    font-size: 0.65rem; font-weight: 600; letter-spacing: 0.3px;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 99px;
+    opacity: 0.8;
   }}
-  .date {{ font-size: 0.8rem; color: #888; }}
+  .date {{ font-size: 0.85rem; color: #bbb; font-weight: 500; }}
   .card-title {{
     font-size: 1.05rem; font-weight: 600; line-height: 1.4;
     margin-bottom: 6px; color: #f0f0ff;
@@ -825,40 +856,31 @@ def build_html(events: list[dict]) -> str:
     text-align: center; color: #666; padding: 60px 20px;
     grid-column: 1 / -1; font-size: 1rem; line-height: 1.8;
   }}
-  .manual {{
-    max-width: 1100px; margin: 48px auto 0;
-    background: #1a1a24; border: 1px solid #2a2a38;
-    border-radius: 14px; padding: 24px 28px;
-  }}
-  .manual h3 {{
-    font-size: 0.85rem; text-transform: uppercase;
-    letter-spacing: 1px; color: #888; margin-bottom: 14px;
-  }}
-  .manual ul {{ list-style: none; display: flex; flex-direction: column; gap: 10px; }}
-  .manual a {{ color: #7873f5; text-decoration: none; font-size: 0.9rem; }}
-  .manual a:hover {{ text-decoration: underline; }}
-  .manual strong {{ color: #e8e8f0; }}
-  .count {{ text-align: center; color: #666; font-size: 0.82rem; margin-bottom: 20px; }}
-  .section {{ max-width: 1100px; margin: 0 auto 40px; }}
-  .section-title {{
-    font-size: 1.3rem; font-weight: 700; color: #e8e8f0;
-    margin-bottom: 16px; padding-bottom: 10px;
-    border-bottom: 2px solid; display: flex; align-items: center; gap: 10px;
-  }}
-  .section-dot {{
-    width: 12px; height: 12px; border-radius: 50%; display: inline-block;
-  }}
-  .section-count {{ font-weight: 400; color: #666; font-size: 0.9rem; }}
+  .tab-panel {{ max-width: 1100px; margin: 0 auto; }}
 </style>
 </head>
 <body>
 <div class="header">
   <h1>Austin Babe Radar</h1>
-  <div class="subtitle">Trending coed events near downtown Austin &nbsp;·&nbsp; {now_str}</div>
+  <div class="subtitle">{len(events)} events within {MAX_DISTANCE_MILES:.0f} miles of downtown · next 7 days only &nbsp;·&nbsp; {now_str}</div>
 </div>
-<div class="count">{len(events)} events within {MAX_DISTANCE_MILES:.0f} miles of downtown</div>
-{sections_html}
+<div class="tabs">
+{tab_buttons}
+</div>
+{tab_panels}
 {manual}
+<script>
+document.querySelectorAll('.tab').forEach(function(btn) {{
+  btn.addEventListener('click', function() {{
+    document.querySelectorAll('.tab').forEach(function(b) {{ b.classList.remove('active'); }});
+    document.querySelectorAll('.tab-panel').forEach(function(p) {{ p.style.display = 'none'; }});
+    btn.classList.add('active');
+    var panel = document.getElementById('panel-' + btn.dataset.tab);
+    if (panel) panel.style.display = 'block';
+    document.body.style.background = btn.dataset.bg;
+  }});
+}});
+</script>
 </body>
 </html>"""
 
