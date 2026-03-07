@@ -104,10 +104,17 @@ EXCLUDE_KEYWORDS = [
     "moms only", "mothers only", "bridal", "bachelorette",
     "women who", "for women", "for ladies", "girls who",
     "femme only", "female only",
+    "woman network", "women network", "women's network",
+    "for her", "she runs", "girl tribe", "lady boss",
+    "mama", "moms group", "mom group",
+    # Age-restricted groups (not our demo)
+    "50s", "over 50", "50+", "55+", "60+", "senior", "retiree",
+    "40s and 50s", "50 and over", "fit 50",
     # LGBTQ / Queer-focused
     "queer", "lgbtq", "lgbt", "pride", "drag", "drag brunch",
     "drag queen", "drag show", "nonbinary", "non-binary", "trans ",
     "two-spirit", "sapphic", "leather", "kink",
+    "lesbian", "lesbians", "gay ",
     # Woke / activist
     "decolonize", "decolonizing", "anti-racist", "antiracist",
     "abolition", "mutual aid", "reparations",
@@ -127,6 +134,13 @@ WORKOUT_KEYWORDS = [
     "cold plunge", "ice bath", "sauna", "fitness",
 ]
 
+SPIRITUAL_KEYWORDS = [
+    "sound bath", "sound healing", "breathwork", "meditation",
+    "wellness retreat", "cacao ceremony", "kirtan", "ecstatic dance",
+    "reiki", "energy healing", "crystal", "full moon", "new moon",
+    "sacred", "ceremony", "mindfulness", "zen",
+]
+
 SOCIAL_KEYWORDS = [
     "brunch", "matcha", "sip and paint", "sip & paint",
     "wine tasting", "coffee crawl", "paint night", "pottery",
@@ -134,8 +148,7 @@ SOCIAL_KEYWORDS = [
     "art market", "mixer", "social", "singles", "speed dating",
     "young professionals", "rooftop", "outdoor cinema", "picnic",
     "farmers market", "food pop up", "pop up", "pop-up",
-    "sunset", "sound bath", "sound healing", "breathwork",
-    "meditation", "wellness",
+    "sunset", "wellness",
 ]
 
 
@@ -165,16 +178,18 @@ def _is_relevant(text: str) -> bool:
 
 
 def _classify_category(text: str) -> str:
-    """Classify event as 'Workout', 'Social', or 'Social' (default)."""
+    """Classify event as 'Workout', 'Spiritual', or 'Social'."""
     lower = text.lower()
-    is_workout = any(kw in lower for kw in WORKOUT_KEYWORDS)
-    is_social  = any(kw in lower for kw in SOCIAL_KEYWORDS)
-    if is_workout and not is_social:
+    is_workout   = any(kw in lower for kw in WORKOUT_KEYWORDS)
+    is_spiritual = any(kw in lower for kw in SPIRITUAL_KEYWORDS)
+    is_social    = any(kw in lower for kw in SOCIAL_KEYWORDS)
+    # Priority: Spiritual > Workout > Social
+    if is_spiritual and not is_workout:
+        return "Spiritual"
+    if is_workout:
         return "Workout"
-    if is_social and not is_workout:
+    if is_social:
         return "Social"
-    if is_workout and is_social:
-        return "Workout"  # if it matches both, lean workout
     return "Social"
 
 
@@ -468,7 +483,9 @@ def scrape_meetup() -> list[dict]:
         if next_tag:
             try:
                 nd = json.loads(next_tag.string or "")
-                _walk_meetup_data(nd, results, seen_urls)
+                # Build group name lookup from Apollo cache refs
+                group_names = _build_group_lookup(nd)
+                _walk_meetup_data(nd, results, seen_urls, group_names=group_names)
             except (json.JSONDecodeError, AttributeError):
                 pass
 
@@ -485,7 +502,9 @@ def scrape_meetup() -> list[dict]:
                         continue
                     name = item.get("name", "")
                     desc = item.get("description", "")
-                    if not _is_relevant(name + " " + desc):
+                    organizer = (item.get("organizer") or {}).get("name", "")
+                    full_text = f"{name} {desc} {organizer} {event_url}"
+                    if not _is_relevant(full_text):
                         continue
                     seen_urls.add(event_url)
 
@@ -522,7 +541,31 @@ def scrape_meetup() -> list[dict]:
     return results
 
 
-def _walk_meetup_data(obj, results: list, seen_urls: set, depth: int = 0) -> None:
+def _build_group_lookup(obj, result: dict = None, depth: int = 0) -> dict:
+    """Walk __NEXT_DATA__ to find Group objects and map their __ref/id to name."""
+    if result is None:
+        result = {}
+    if depth > 15:
+        return result
+    if isinstance(obj, dict):
+        if obj.get("__typename") == "Group" and obj.get("name"):
+            ref = obj.get("__ref") or f"Group:{obj.get('id', '')}"
+            result[ref] = obj["name"]
+            # Also map urlname for URL-based lookup
+            if obj.get("urlname"):
+                result[obj["urlname"]] = obj["name"]
+        for v in obj.values():
+            _build_group_lookup(v, result, depth + 1)
+    elif isinstance(obj, list):
+        for item in obj:
+            _build_group_lookup(item, result, depth + 1)
+    return result
+
+
+def _walk_meetup_data(obj, results: list, seen_urls: set, depth: int = 0,
+                      group_names: dict = None) -> None:
+    if group_names is None:
+        group_names = {}
     if depth > 12:
         return
     if isinstance(obj, dict):
@@ -532,7 +575,24 @@ def _walk_meetup_data(obj, results: list, seen_urls: set, depth: int = 0) -> Non
 
         if title and url and url not in seen_urls:
             desc = obj.get("description") or title
-            if _is_relevant(title + " " + desc):
+
+            # Resolve group name from Apollo cache refs
+            group = obj.get("group") or {}
+            group_name = ""
+            if isinstance(group, dict):
+                group_name = group.get("name", "")
+                if not group_name:
+                    ref = group.get("__ref", "")
+                    group_name = group_names.get(ref, "")
+                if not group_name:
+                    urlname = group.get("urlname", "")
+                    group_name = group_names.get(urlname, "")
+
+            # Also use URL slug (e.g. /women-outdoors-austin/)
+            url_slug = url.split("/")[3] if url.count("/") >= 4 else ""
+
+            full_text = f"{title} {desc} {group_name} {url_slug}"
+            if _is_relevant(full_text):
                 seen_urls.add(url)
 
                 # Traction
@@ -575,10 +635,10 @@ def _walk_meetup_data(obj, results: list, seen_urls: set, depth: int = 0) -> Non
                 })
 
         for v in obj.values():
-            _walk_meetup_data(v, results, seen_urls, depth + 1)
+            _walk_meetup_data(v, results, seen_urls, depth + 1, group_names)
     elif isinstance(obj, list):
         for item in obj:
-            _walk_meetup_data(item, results, seen_urls, depth + 1)
+            _walk_meetup_data(item, results, seen_urls, depth + 1, group_names)
 
 
 # ===========================================================================
@@ -622,62 +682,73 @@ def build_html(events: list[dict]) -> str:
         "Meetup":     ("#ed1c40", "white"),
     }
 
-    cards_html = ""
+    # Group events by category
+    sections = [
+        ("Workout",   "#22c55e", [e for e in events if e.get("category") == "Workout"]),
+        ("Spiritual", "#c084fc", [e for e in events if e.get("category") == "Spiritual"]),
+        ("Social",    "#38bdf8", [e for e in events if e.get("category") == "Social"]),
+    ]
+
+    sections_html = ""
     if not events:
-        cards_html = """
+        sections_html = """
         <div class="empty">
             No coed events matched your filters right now.<br>
             Try the manual links below or widen MAX_DISTANCE_MILES.
         </div>"""
     else:
-        for e in events[:TOP_N]:
-            name   = html_escape(e.get("name") or "")
-            source = e.get("source", "")
-            url    = e.get("url") or "#"
-            bg, fg = source_badge.get(source, ("#888", "white"))
+        for section_name, section_color, section_events in sections:
+            if not section_events:
+                continue
+            sections_html += f"""
+        <div class="section">
+            <h2 class="section-title" style="border-color:{section_color}">
+                <span class="section-dot" style="background:{section_color}"></span>
+                {section_name} <span class="section-count">({len(section_events)})</span>
+            </h2>
+            <div class="grid">"""
 
-            # Date + day
-            dow  = e.get("day_of_week", "")
-            date = e.get("date") or "date TBD"
-            t    = e.get("time") or ""
-            date_display = f"{dow}, {date}" if dow else date
-            if t:
-                date_display += f" at {t}"
+            for e in section_events:
+                name   = html_escape(e.get("name") or "")
+                source = e.get("source", "")
+                url    = e.get("url") or "#"
+                bg, fg = source_badge.get(source, ("#888", "white"))
 
-            # Location + distance
-            venue = html_escape(e.get("venue_name") or e.get("address") or "Austin, TX")
-            dist  = e.get("distance_miles")
-            dist_str = f" — {dist} mi from downtown" if dist is not None else ""
+                dow  = e.get("day_of_week", "")
+                date = e.get("date") or "date TBD"
+                t    = e.get("time") or ""
+                date_display = f"{dow}, {date}" if dow else date
+                if t:
+                    date_display += f" at {t}"
 
-            # Price
-            price_str = _format_price(e)
-            price_class = "free" if (e.get("is_free") or price_str == "FREE") else ""
+                venue = html_escape(e.get("venue_name") or e.get("address") or "Austin, TX")
+                dist  = e.get("distance_miles")
+                dist_str = f" — {dist} mi from downtown" if dist is not None else ""
 
-            # Traction
-            traction_str = _format_traction(e)
+                price_str = _format_price(e)
+                price_class = "free" if (e.get("is_free") or price_str == "FREE") else ""
+                traction_str = _format_traction(e)
 
-            # Description (skip if same as title)
-            text = e.get("text") or ""
-            desc = text if text.lower().strip() != name.lower().strip() else ""
-            desc = html_escape(desc[:180]) + ("..." if len(desc) > 180 else "") if desc else ""
+                text = e.get("text") or ""
+                desc = text if text.lower().strip() != name.lower().strip() else ""
+                desc = html_escape(desc[:180]) + ("..." if len(desc) > 180 else "") if desc else ""
 
-            # Category tag
-            cat = e.get("category", "Social")
-            cat_bg = "#22c55e" if cat == "Workout" else "#a78bfa"
+                sections_html += f"""
+                <a class="card" href="{url}" target="_blank" rel="noopener">
+                    <div class="card-top">
+                        <span class="badge" style="background:{bg};color:{fg}">{source}</span>
+                        <span class="date">{date_display}</span>
+                    </div>
+                    <div class="card-title">{name}</div>
+                    <div class="card-location">📍 {venue}{dist_str}</div>
+                    {"<div class='card-price " + price_class + "'>💰 " + price_str + "</div>" if price_str else ""}
+                    {"<div class='card-traction'>" + traction_str + "</div>" if traction_str else ""}
+                    {"<div class='card-desc'>" + desc + "</div>" if desc else ""}
+                </a>"""
 
-            cards_html += f"""
-        <a class="card" href="{url}" target="_blank" rel="noopener">
-            <div class="card-top">
-                <span class="badge" style="background:{bg};color:{fg}">{source}</span>
-                <span class="badge" style="background:{cat_bg};color:white">{cat}</span>
-                <span class="date">{date_display}</span>
+            sections_html += """
             </div>
-            <div class="card-title">{name}</div>
-            <div class="card-location">📍 {venue}{dist_str}</div>
-            {"<div class='card-price " + price_class + "'>💰 " + price_str + "</div>" if price_str else ""}
-            {"<div class='card-traction'>" + traction_str + "</div>" if traction_str else ""}
-            {"<div class='card-desc'>" + desc + "</div>" if desc else ""}
-        </a>"""
+        </div>"""
 
     manual = """
         <div class="manual">
@@ -768,6 +839,16 @@ def build_html(events: list[dict]) -> str:
   .manual a:hover {{ text-decoration: underline; }}
   .manual strong {{ color: #e8e8f0; }}
   .count {{ text-align: center; color: #666; font-size: 0.82rem; margin-bottom: 20px; }}
+  .section {{ max-width: 1100px; margin: 0 auto 40px; }}
+  .section-title {{
+    font-size: 1.3rem; font-weight: 700; color: #e8e8f0;
+    margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 2px solid; display: flex; align-items: center; gap: 10px;
+  }}
+  .section-dot {{
+    width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+  }}
+  .section-count {{ font-weight: 400; color: #666; font-size: 0.9rem; }}
 </style>
 </head>
 <body>
@@ -775,10 +856,8 @@ def build_html(events: list[dict]) -> str:
   <h1>Austin Babe Radar</h1>
   <div class="subtitle">Trending coed events near downtown Austin &nbsp;·&nbsp; {now_str}</div>
 </div>
-<div class="count">{len(events[:TOP_N])} events within {MAX_DISTANCE_MILES:.0f} miles of downtown</div>
-<div class="grid">
-{cards_html}
-</div>
+<div class="count">{len(events)} events within {MAX_DISTANCE_MILES:.0f} miles of downtown</div>
+{sections_html}
 {manual}
 </body>
 </html>"""
