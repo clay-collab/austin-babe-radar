@@ -852,9 +852,11 @@ def build_html(events: list[dict]) -> str:
   .header h1 {{
     font-family: 'Orbitron', sans-serif;
     font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900;
-    background: linear-gradient(135deg, #ff6ec4, #7873f5, #4adede);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; letter-spacing: 2px; text-transform: uppercase;
+    color: #cc2b2b; letter-spacing: 2px; text-transform: uppercase;
+  }}
+  .header-sub {{
+    font-size: 0.72rem; color: #4a6040; letter-spacing: 1.8px;
+    text-transform: uppercase; margin-top: 4px;
   }}
   /* ── Radar dot ── */
   @keyframes radar-bounce {{
@@ -890,13 +892,13 @@ def build_html(events: list[dict]) -> str:
   }}
   .typewriter-wrap {{
     display: inline-block; margin-top: 10px;
-    font-size: 0.95rem; color: #ff9ecf; font-style: italic;
+    font-size: 0.95rem; color: #4ade80; font-style: italic;
     letter-spacing: 0.3px;
     animation: float-up-down 3s ease-in-out infinite;
   }}
   .typewriter-cursor {{
     display: inline-block; width: 2px; height: 0.9em;
-    background: #ff6ec4; margin-left: 2px; vertical-align: text-bottom;
+    background: #4ade80; margin-left: 2px; vertical-align: text-bottom;
     animation: blink-cursor 0.7s step-end infinite;
   }}
   /* ── Info box ── */
@@ -985,15 +987,14 @@ def build_html(events: list[dict]) -> str:
     <h1>Austin Babe Radar</h1>
     <div class="radar-dot"><div class="radar-dot-ring"></div><div class="radar-dot-core"></div></div>
   </div>
+  <div class="header-sub">high signal data feed of events where the babes be</div>
   <div class="typewriter-wrap"><span id="typewriter-text"></span><span class="typewriter-cursor"></span></div>
   <div class="info-box">
-    <span>📅 {now_str}</span>
-    <span class="info-sep">·</span>
     <span>📍 within {MAX_DISTANCE_MILES:.0f} mi of downtown Austin</span>
     <span class="info-sep">·</span>
     <span>🗓 next 7 days &nbsp;·&nbsp; {len(events)} events found</span>
     <span class="info-sep">·</span>
-    <span>🏃 workout &nbsp;·&nbsp; 🧘 spiritual &nbsp;·&nbsp; 🎉 social</span>
+    <span>🎯 proprietary algorithm for maximizing babes</span>
   </div>
 </div>
 <div class="tabs">
