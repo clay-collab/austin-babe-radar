@@ -39,7 +39,7 @@ from email.mime.multipart import MIMEMultipart
 # CONFIG
 # ===========================================================================
 
-TOP_N = 25
+TOP_N = 40
 
 # Downtown Austin center
 DOWNTOWN_LAT = 30.2672
@@ -115,39 +115,27 @@ EXCLUDE_KEYWORDS = [
     "teen ", "teens", "teenager", "teenagers", "ages 13", "ages 14",
     "ages 15", "ages 16", "13-18", "high school", "middle school",
     # LGBTQ / Queer-focused
-    "queer", "lgbtq", "lgbt", "pride", "drag", "drag brunch",
+    "queer", "lgbtq", "lgbt", "drag brunch",
     "drag queen", "drag show", "nonbinary", "non-binary", "trans ",
-    "two-spirit", "sapphic", "leather", "kink",
+    "two-spirit", "sapphic", "kink",
     "lesbian", "lesbians", "gay ",
     # Religious
     "bible study", "bible", "church", "worship service", "prayer group",
     # Woke / activist
     "decolonize", "decolonizing", "anti-racist", "antiracist",
-    "abolition", "mutual aid", "reparations",
-    "bipoc only", "poc only", "safe space",
-    "social justice", "allyship", "intersectional",
-    "privilege", "patriarchy", "dismantle",
-    "join our directory", "be a resource",
+    "abolition", "reparations",
+    "bipoc only", "poc only",
+    "patriarchy", "dismantle",
     "inclusion workshop", "diversity workshop", "dei ",
-    "anti-oppression", "healing justice",
-    # Racial / ethnic identity-focused (not general audience)
-    "black wellness", "for black", "melanin", "african american wellness",
-    "asian wellness", "for asian", "asian american", "aapi ",
-    "hispanic wellness", "for hispanic", "for latino", "for latina", "latinx",
-    "indigenous wellness", "for indigenous", "native american wellness",
-    "jewish wellness", "for jewish",
-    "arab american",
-    "people of color", "communities of color", "minority community",
+    "anti-oppression",
     # Professional / work-related (not fun)
     "advertising mastery", "social media advertising", "digital marketing",
     "job fair", "career fair", "linkedin",
     "business workshop", "sales training",
     "b2b", "lead generation", "networking for business",
-    "career coaching",
     "pitch competition",
-    "how to grow", "grow your business", "monetize",
+    "monetize",
     "real estate investing", "passive income", "side hustle",
-    "workshop for entrepreneurs",
 ]
 
 # Keywords checked against the event TITLE only (too common in descriptions to exclude broadly)
@@ -158,6 +146,7 @@ TITLE_EXCLUDE_KEYWORDS = [
     "for founders", "for executives",
     "resume",  # noun résumé — too risky as full-text (verb "resume" is common)
     "scale your",  # "scale your practice" is wellness language
+    "women's", "womens",
 ]
 
 # ---------------------------------------------------------------------------
@@ -735,7 +724,7 @@ def aggregate(sources: list[list[dict]]) -> list[dict]:
             continue
         # Min 10 going (keep if unknown)
         rsvp = e.get("rsvp_count")
-        if rsvp is not None and rsvp < 10:
+        if rsvp is not None and rsvp < 3:
             skip_rsvp += 1
             continue
         filtered.append(e)
