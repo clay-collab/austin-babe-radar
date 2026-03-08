@@ -112,10 +112,8 @@ EXCLUDE_KEYWORDS = [
     "50s", "over 50", "50+", "55+", "60+", "senior", "retiree",
     "40s and 50s", "50 and over", "fit 50",
     # Too young
-    "teen ", "teens", "teenager", "teenagers", "youth", "ages 13", "ages 14",
+    "teen ", "teens", "teenager", "teenagers", "ages 13", "ages 14",
     "ages 15", "ages 16", "13-18", "high school", "middle school",
-    # Age-targeted singles (e.g. "born 1965-1985")
-    "born 196", "born 197", "born 198",
     # LGBTQ / Queer-focused
     "queer", "lgbtq", "lgbt", "pride", "drag", "drag brunch",
     "drag queen", "drag show", "nonbinary", "non-binary", "trans ",
@@ -142,19 +140,24 @@ EXCLUDE_KEYWORDS = [
     "people of color", "communities of color", "minority community",
     # Professional / work-related (not fun)
     "advertising mastery", "social media advertising", "digital marketing",
-    "job fair", "career fair", "resume", "linkedin",
+    "job fair", "career fair", "linkedin",
     "business workshop", "sales training",
     "b2b", "lead generation", "networking for business",
-    "professional development", "career development", "career coaching",
+    "career coaching",
     "pitch competition",
-    "how to grow", "grow your business", "scale your", "monetize",
+    "how to grow", "grow your business", "monetize",
     "real estate investing", "passive income", "side hustle",
-    "workshop for entrepreneurs", "for founders", "for executives",
+    "workshop for entrepreneurs",
 ]
 
 # Keywords checked against the event TITLE only (too common in descriptions to exclude broadly)
 TITLE_EXCLUDE_KEYWORDS = [
     "conference",
+    "born 196", "born 197", "born 198",  # age-targeted singles events
+    "professional development", "career development",
+    "for founders", "for executives",
+    "resume",  # noun résumé — too risky as full-text (verb "resume" is common)
+    "scale your",  # "scale your practice" is wellness language
 ]
 
 # ---------------------------------------------------------------------------
