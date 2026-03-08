@@ -149,6 +149,7 @@ EXCLUDE_KEYWORDS = [
     "how to grow", "grow your business", "scale your", "monetize",
     "real estate investing", "passive income", "side hustle",
     "workshop for entrepreneurs", "for founders", "for executives",
+    "conference",
 ]
 
 # ---------------------------------------------------------------------------
