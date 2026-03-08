@@ -253,7 +253,7 @@ def _add_computed_fields(event: dict) -> dict:
     if len(date_str) >= 10:
         try:
             dt = datetime.strptime(date_str[:10], "%Y-%m-%d")
-            if dt.date() == datetime.now().date():
+            if dt.date() == datetime.now(ZoneInfo("America/Chicago")).date():
                 event["day_of_week"] = "Today"
             else:
                 event["day_of_week"] = dt.strftime("%A")
@@ -365,7 +365,8 @@ def scrape_eventbrite() -> list[dict]:
                 eq_idx = raw.index("=", eq_idx) + 1
                 json_str = raw[eq_idx:].strip()
                 server_data, _ = json.JSONDecoder().raw_decode(json_str)
-            except (ValueError, json.JSONDecodeError):
+            except (ValueError, json.JSONDecodeError) as e:
+                print(f"  [Eventbrite] JSON parse error: {e}")
                 continue
 
             events_list = (
@@ -493,8 +494,8 @@ def fetch_eventbrite_prices(events: list[dict], max_fetch: int = 20) -> list[dic
                 e["is_free"]      = (low == 0 and high == 0)
                 e["availability"] = offer.get("availability", "")
                 break
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  [Eventbrite] Price fetch error: {e}")
         time.sleep(0.3)
 
     return events
@@ -542,8 +543,8 @@ def scrape_meetup() -> list[dict]:
                 # Build group name lookup from Apollo cache refs
                 group_names = _build_group_lookup(nd)
                 _walk_meetup_data(nd, results, seen_urls, group_names=group_names)
-            except (json.JSONDecodeError, AttributeError):
-                pass
+            except (json.JSONDecodeError, AttributeError) as e:
+                print(f"  [Meetup] JSON parse error: {e}")
 
         # --- Strategy B: JSON-LD fallback ---
         for script in soup.find_all("script", type="application/ld+json"):
@@ -712,24 +713,32 @@ def aggregate(sources: list[list[dict]]) -> list[dict]:
             item = _add_computed_fields(item)
             combined.append(item)
 
-    today = datetime.now().strftime("%Y-%m-%d")
-    cutoff = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
+    _now = datetime.now(ZoneInfo("America/Chicago"))
+    today = _now.strftime("%Y-%m-%d")
+    cutoff = (_now + timedelta(days=7)).strftime("%Y-%m-%d")
 
     filtered = []
+    skip_dist = skip_date = skip_rsvp = 0
     for e in combined:
         # Distance filter
         dist = e.get("distance_miles")
         if dist is not None and dist > MAX_DISTANCE_MILES:
+            skip_dist += 1
             continue
         # Only next 7 days
         d = e.get("date") or ""
         if d and (d < today or d > cutoff):
+            skip_date += 1
             continue
         # Min 10 going (keep if unknown)
         rsvp = e.get("rsvp_count")
         if rsvp is not None and rsvp < 10:
+            skip_rsvp += 1
             continue
         filtered.append(e)
+
+    print(f"  [Filter] {len(combined)} total -> {len(filtered)} kept "
+          f"(skip: {skip_dist} distance, {skip_date} date, {skip_rsvp} rsvp)")
 
     # Sort soonest first
     filtered.sort(key=lambda x: x.get("date") or "9999-99-99")
