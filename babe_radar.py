@@ -253,8 +253,11 @@ def _add_computed_fields(event: dict) -> dict:
     if len(date_str) >= 10:
         try:
             dt = datetime.strptime(date_str[:10], "%Y-%m-%d")
-            if dt.date() == datetime.now(ZoneInfo("America/Chicago")).date():
+            _today = datetime.now(ZoneInfo("America/Chicago")).date()
+            if dt.date() == _today:
                 event["day_of_week"] = "Today"
+            elif dt.date() == _today + timedelta(days=1):
+                event["day_of_week"] = "Tomorrow"
             else:
                 event["day_of_week"] = dt.strftime("%A")
         except ValueError:
@@ -827,6 +830,8 @@ def build_html(events: list[dict]) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Austin Babe Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
@@ -836,36 +841,100 @@ def build_html(events: list[dict]) -> str:
     min-height: 100vh;
     padding: 32px 16px 64px;
     transition: background 0.4s ease;
+    overflow-x: hidden;
   }}
+  /* ── Header ── */
   .header {{ text-align: center; margin-bottom: 24px; }}
+  .header-bar {{
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin-bottom: 4px;
+  }}
   .header h1 {{
-    font-size: 2.4rem; font-weight: 800;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900;
     background: linear-gradient(135deg, #ff6ec4, #7873f5, #4adede);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; letter-spacing: -0.5px;
+    background-clip: text; letter-spacing: 2px; text-transform: uppercase;
   }}
-  .header .subtitle {{ color: #888; margin-top: 6px; font-size: 0.9rem; }}
+  /* ── Radar dot ── */
+  @keyframes radar-bounce {{
+    0%, 100% {{ transform: scale(1); }}
+    40% {{ transform: scale(1.45); }}
+    70% {{ transform: scale(1.1); }}
+  }}
+  @keyframes radar-ping {{
+    0% {{ transform: scale(1); opacity: 0.8; }}
+    100% {{ transform: scale(3.2); opacity: 0; }}
+  }}
+  .radar-dot {{
+    position: relative; display: inline-block;
+    width: 14px; height: 14px; flex-shrink: 0;
+  }}
+  .radar-dot-ring {{
+    position: absolute; inset: 0;
+    background: #ff2233; border-radius: 50%;
+    animation: radar-ping 1.5s ease-out infinite;
+  }}
+  .radar-dot-core {{
+    position: absolute; inset: 0;
+    background: #ff2233; border-radius: 50%;
+    animation: radar-bounce 0.85s cubic-bezier(.36,.07,.19,.97) infinite;
+  }}
+  /* ── Typewriter ── */
+  @keyframes float-up-down {{
+    0%, 100% {{ transform: translateY(0); }}
+    50% {{ transform: translateY(-5px); }}
+  }}
+  @keyframes blink-cursor {{
+    0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0; }}
+  }}
+  .typewriter-wrap {{
+    display: inline-block; margin-top: 10px;
+    font-size: 0.95rem; color: #ff9ecf; font-style: italic;
+    letter-spacing: 0.3px;
+    animation: float-up-down 3s ease-in-out infinite;
+  }}
+  .typewriter-cursor {{
+    display: inline-block; width: 2px; height: 0.9em;
+    background: #ff6ec4; margin-left: 2px; vertical-align: text-bottom;
+    animation: blink-cursor 0.7s step-end infinite;
+  }}
+  /* ── Info box ── */
+  .info-box {{
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+    gap: 4px 10px; margin: 14px auto 0; max-width: 640px;
+    background: rgba(120,115,245,0.07); border: 1px solid rgba(120,115,245,0.2);
+    border-radius: 12px; padding: 10px 20px;
+    font-size: 0.8rem; color: #aaa;
+  }}
+  .info-box span {{ white-space: nowrap; }}
+  .info-sep {{ color: #3a3a4a; }}
+  /* ── Tabs ── */
   .tabs {{
-    display: flex; justify-content: center; gap: 8px;
-    max-width: 500px; margin: 0 auto 28px;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+    max-width: 520px; margin: 0 auto 28px; padding: 0 4px;
   }}
   .tab {{
-    flex: 1; padding: 10px 16px; border: 1px solid #2a2a38;
+    flex: 1; min-width: 80px; padding: 10px 16px; border: 1px solid #2a2a38;
     border-radius: 10px; background: #1a1a24; color: #888;
     font-size: 0.95rem; font-weight: 600; cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
   }}
-  .tab:hover {{ border-color: #444; color: #ccc; }}
+  .tab:hover {{ border-color: #555; color: #ddd; background: #20202e; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.25); }}
+  .tab:active {{ transform: scale(0.94); box-shadow: none; }}
   .tab.active {{
     background: var(--tab-color); color: #fff;
     border-color: var(--tab-color);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
   }}
   .tab-count {{
     font-weight: 400; font-size: 0.8rem; opacity: 0.7;
   }}
+  /* ── Grid ── */
   .grid {{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
     gap: 16px; max-width: 1100px; margin: 0 auto;
   }}
   .card {{
@@ -873,16 +942,18 @@ def build_html(events: list[dict]) -> str:
     border-radius: 14px; padding: 18px 20px;
     text-decoration: none; color: inherit;
     transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }}
   .card:hover {{
     transform: translateY(-3px); border-color: #7873f5;
     box-shadow: 0 8px 32px rgba(120,115,245,0.15);
   }}
+  .card:active {{ transform: scale(0.98); }}
   .card-top {{ display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }}
   .badge {{
     font-size: 0.65rem; font-weight: 600; letter-spacing: 0.3px;
     text-transform: uppercase; padding: 2px 7px; border-radius: 99px;
-    opacity: 0.8;
+    opacity: 0.8; white-space: nowrap;
   }}
   .date {{ font-size: 0.85rem; color: #bbb; font-weight: 500; }}
   .card-title {{
@@ -909,8 +980,21 @@ def build_html(events: list[dict]) -> str:
 </head>
 <body>
 <div class="header">
-  <h1>Austin Babe Radar</h1>
-  <div class="subtitle">{len(events)} events within {MAX_DISTANCE_MILES:.0f} miles of downtown · next 7 days only &nbsp;·&nbsp; {now_str}</div>
+  <div class="header-bar">
+    <div class="radar-dot"><div class="radar-dot-ring"></div><div class="radar-dot-core"></div></div>
+    <h1>Austin Babe Radar</h1>
+    <div class="radar-dot"><div class="radar-dot-ring"></div><div class="radar-dot-core"></div></div>
+  </div>
+  <div class="typewriter-wrap"><span id="typewriter-text"></span><span class="typewriter-cursor"></span></div>
+  <div class="info-box">
+    <span>📅 {now_str}</span>
+    <span class="info-sep">·</span>
+    <span>📍 within {MAX_DISTANCE_MILES:.0f} mi of downtown Austin</span>
+    <span class="info-sep">·</span>
+    <span>🗓 next 7 days &nbsp;·&nbsp; {len(events)} events found</span>
+    <span class="info-sep">·</span>
+    <span>🏃 workout &nbsp;·&nbsp; 🧘 spiritual &nbsp;·&nbsp; 🎉 social</span>
+  </div>
 </div>
 <div class="tabs">
 {tab_buttons}
@@ -918,6 +1002,18 @@ def build_html(events: list[dict]) -> str:
 {tab_panels}
 {manual}
 <script>
+(function() {{
+  var text = "where are the babes at?";
+  var el = document.getElementById('typewriter-text');
+  var i = 0;
+  function type() {{
+    if (i <= text.length) {{
+      el.textContent = text.slice(0, i++);
+      setTimeout(type, i === 1 ? 500 : 72);
+    }}
+  }}
+  type();
+}})();
 document.querySelectorAll('.tab').forEach(function(btn) {{
   btn.addEventListener('click', function() {{
     document.querySelectorAll('.tab').forEach(function(b) {{ b.classList.remove('active'); }});
