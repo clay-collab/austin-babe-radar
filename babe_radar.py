@@ -29,6 +29,7 @@ import tempfile
 import webbrowser
 import requests
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from html import escape as html_escape
 from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
@@ -731,7 +732,7 @@ def aggregate(sources: list[list[dict]]) -> list[dict]:
 # ===========================================================================
 
 def build_html(events: list[dict]) -> str:
-    now_str = datetime.now().strftime("%B %d, %Y  %-I:%M %p")
+    now_str = datetime.now(ZoneInfo("America/Chicago")).strftime("%B %d, %Y  %-I:%M %p CST")
 
     # Muted source badge colors
     source_badge = {
