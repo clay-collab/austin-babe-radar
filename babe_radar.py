@@ -150,6 +150,10 @@ EXCLUDE_KEYWORDS = [
     "how to grow", "grow your business", "scale your", "monetize",
     "real estate investing", "passive income", "side hustle",
     "workshop for entrepreneurs", "for founders", "for executives",
+]
+
+# Keywords checked against the event TITLE only (too common in descriptions to exclude broadly)
+TITLE_EXCLUDE_KEYWORDS = [
     "conference",
 ]
 
@@ -200,9 +204,11 @@ def haversine_miles(lat1: float, lon1: float, lat2: float, lon2: float) -> float
 # HELPERS
 # ===========================================================================
 
-def _is_relevant(text: str) -> bool:
+def _is_relevant(text: str, title: str = "") -> bool:
     lower = text.lower()
     if any(ex in lower for ex in EXCLUDE_KEYWORDS):
+        return False
+    if title and any(ex in title.lower() for ex in TITLE_EXCLUDE_KEYWORDS):
         return False
     return any(kw in lower for kw in SIGNAL_KEYWORDS)
 
@@ -373,7 +379,7 @@ def scrape_eventbrite() -> list[dict]:
 
                 name    = ev.get("name") or ""
                 summary = ev.get("summary") or ""
-                if not _is_relevant(name + " " + summary):
+                if not _is_relevant(name + " " + summary, title=name):
                     continue
 
                 seen_urls.add(event_url)
@@ -421,7 +427,7 @@ def scrape_eventbrite() -> list[dict]:
                         continue
                     name = item.get("name", "")
                     desc = item.get("description", "")
-                    if not _is_relevant(name + " " + desc):
+                    if not _is_relevant(name + " " + desc, title=name):
                         continue
                     seen_urls.add(event_url)
 
@@ -551,7 +557,7 @@ def scrape_meetup() -> list[dict]:
                     desc = item.get("description", "")
                     organizer = (item.get("organizer") or {}).get("name", "")
                     full_text = f"{name} {desc} {organizer} {event_url}"
-                    if not _is_relevant(full_text):
+                    if not _is_relevant(full_text, title=name):
                         continue
                     seen_urls.add(event_url)
 
@@ -639,7 +645,7 @@ def _walk_meetup_data(obj, results: list, seen_urls: set, depth: int = 0,
             url_slug = url.split("/")[3] if url.count("/") >= 4 else ""
 
             full_text = f"{title} {desc} {group_name} {url_slug}"
-            if _is_relevant(full_text):
+            if _is_relevant(full_text, title=title):
                 seen_urls.add(url)
 
                 # Traction
@@ -732,7 +738,9 @@ def aggregate(sources: list[list[dict]]) -> list[dict]:
 # ===========================================================================
 
 def build_html(events: list[dict]) -> str:
-    now_str = datetime.now(ZoneInfo("America/Chicago")).strftime("%B %d, %Y  %-I:%M %p CST")
+    _now_ct = datetime.now(ZoneInfo("America/Chicago"))
+    _tz_label = _now_ct.strftime("%Z")  # dynamically "CST" or "CDT"
+    now_str = _now_ct.strftime(f"%B %d, %Y  %-I:%M %p {_tz_label}")
 
     # Muted source badge colors
     source_badge = {
